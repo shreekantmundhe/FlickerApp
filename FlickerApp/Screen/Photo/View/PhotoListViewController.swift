@@ -22,7 +22,7 @@ class PhotoListViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         initView()
-        initViewModel()
+       // initViewModel()
     }
 
     func initView() {
@@ -39,17 +39,6 @@ class PhotoListViewController: UIViewController {
         tableView.tableHeaderView = searchController.searchBar
       
         tableView.register(PhotoCell.nib, forCellReuseIdentifier: PhotoCell.identifier)
-    }
-    
-    func initViewModel() {
-        viewModel.getPhotos("any")
-        
-        // Reload TableView closure
-        viewModel.reloadTableView = { [weak self] in
-            DispatchQueue.main.async {
-                self?.tableView.reloadData()
-            }
-        }
     }
 }
 
@@ -71,7 +60,7 @@ extension PhotoListViewController: UITableViewDelegate {
 
 extension PhotoListViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return viewModel.PhotoSearchResponse?.count ?? 0
+        return viewModel.photoCellViewModel.count 
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -95,12 +84,14 @@ extension PhotoListViewController: UITableViewDataSource {
 extension PhotoListViewController: UISearchBarDelegate {
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         if let searchText = searchController.searchBar.text, !searchText.isEmpty {
-            viewModel.getPhotos(searchText)
-            
-            // Reload TableView closure
-            viewModel.reloadTableView = { [weak self] in
-                DispatchQueue.main.async {
-                    self?.tableView.reloadData()
+            viewModel.searchPhoto(searchText) { [self] success, results, error in
+                // Reload TableView closure
+                if(success) {
+                viewModel.reloadTableView = { [weak self] in
+                    DispatchQueue.main.async {
+                        self?.tableView.reloadData()
+                    }
+                }
                 }
             }
         }

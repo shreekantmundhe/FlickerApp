@@ -43,43 +43,60 @@ class PhotoDetailsAPI: PhotoInfoServiceProtocol {
     ]
     
     let url = urlBuilder.url!
-    
-    URLSession.shared.dataTask(with: url) { (data, response, error) in
-      //execute completion handler on main thread
-      DispatchQueue.main.async {
-        guard error == nil else {
-          print("Failed request from Flickr: \(error!.localizedDescription)")
-            completion(false, nil, .failedRequest)
-          return
+        
+        //MARK: Use below code if API not working correctly
+        guard let path = Bundle.main.path(forResource: "details", ofType: "json") else {
+            return
         }
-
-        guard let data = data else {
-          print("No data returned from Flickr")
-          completion(false, nil, .noData)
-          return
-        }
-
-        guard let response = response as? HTTPURLResponse else {
-          print("Unable to process Flickr response")
-          completion(false, nil, .invalidResponse)
-          return
-        }
-
-        guard response.statusCode == 200 else {
-          print("Failure response from Tag: \(response.statusCode)")
-          completion(false, nil, .failedRequest)
-          return
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+            let result = try JSONDecoder().decode(PhotoDetailsResponse.self, from: data)
+            //if let response = result? as PhotoDetailsResponse {
+                completion(true, result, nil)
+            //}
+            
+        } catch {
+            print(error)
+            completion(false, nil, .invalidData)
         }
         
-        do {
-          let decoder = JSONDecoder()
-          let searchData = try decoder.decode(PhotoDetailsResponse.self, from: data)
-          
-          completion(true, searchData, nil)
-        } catch {
-            print("error: ", error)
-        }
-      }
-    }.resume()
+//MARK: Use below code for actual API workable scenario
+//    URLSession.shared.dataTask(with: url) { (data, response, error) in
+//      //execute completion handler on main thread
+//      DispatchQueue.main.async {
+//        guard error == nil else {
+//          print("Failed request from Flickr: \(error!.localizedDescription)")
+//            completion(false, nil, .failedRequest)
+//          return
+//        }
+//
+//        guard let data = data else {
+//          print("No data returned from Flickr")
+//          completion(false, nil, .noData)
+//          return
+//        }
+//
+//        guard let response = response as? HTTPURLResponse else {
+//          print("Unable to process Flickr response")
+//          completion(false, nil, .invalidResponse)
+//          return
+//        }
+//
+//        guard response.statusCode == 200 else {
+//          print("Failure response from Tag: \(response.statusCode)")
+//          completion(false, nil, .failedRequest)
+//          return
+//        }
+//
+//        do {
+//          let decoder = JSONDecoder()
+//          let searchData = try decoder.decode(PhotoDetailsResponse.self, from: data)
+//
+//          completion(true, searchData, nil)
+//        } catch {
+//            print("error: ", error)
+//        }
+//      }
+//    }.resume()
   }
 }

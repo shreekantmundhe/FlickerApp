@@ -24,7 +24,6 @@ class PhotoDetailsResponseViewModel: NSObject {
     }
     
     func getPhotoInfo(_ photoID: String) {
-       // group.enter()
         photoInfoServiceProtocol.getPhotoInfoCompletion(photoID: photoID) { success, model, error in
             if success, let response = model {
                 self.delegate?.didReceivePhotoInfoResponse(infoResponse: response.photo)

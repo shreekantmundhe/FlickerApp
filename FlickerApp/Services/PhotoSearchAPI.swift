@@ -8,7 +8,7 @@
 import Foundation
 
 protocol PhotoSearchAPIServiceProtocol {
-    func getImageList(_ tags: String, completion: @escaping (_ success: Bool, _ results: PhotoSearchResponse?, _ error: PhotoSearchAPIResultError?) -> ())
+    func getImageList(_ tags: String, completion: @escaping (_ success: Bool, _ results: [FlickrURLs]?, _ error: PhotoSearchAPIResultError?) -> ())
 }
 
 enum PhotoSearchAPIResultError: Error {
@@ -20,7 +20,7 @@ enum PhotoSearchAPIResultError: Error {
 
 class PhotoSearchAPI: PhotoSearchAPIServiceProtocol {
     
-  typealias PhotoSearchAPIDataCompletion = (Bool, PhotoSearchResponse?, PhotoSearchAPIResultError?) -> ()
+  typealias PhotoSearchAPIDataCompletion = (Bool, [FlickrURLs]?, PhotoSearchAPIResultError?) -> ()
   
   private let apiKey = "2258a13716a5125b8dae87a7d8f332a7"
   private let host = "api.flickr.com"
@@ -49,45 +49,62 @@ class PhotoSearchAPI: PhotoSearchAPIServiceProtocol {
     ]
     
     let url = urlBuilder.url!
-    
-    URLSession.shared.dataTask(with: url) { (data, response, error) in
-      //execute completion handler on main thread
-      DispatchQueue.main.async {
-        guard error == nil else {
-          print("Failed request from Flickr: \(error!.localizedDescription)")
-            completion(false, nil, .failedRequest)
-          return
+        //MARK: Use below code if API not working correctly
+        guard let path = Bundle.main.path(forResource: "photo", ofType: "json") else {
+            return
         }
-
-        guard let data = data else {
-          print("No data returned from Flickr")
-          completion(false, nil, .noData)
-          return
-        }
-
-        guard let response = response as? HTTPURLResponse else {
-          print("Unable to process Flickr response")
-          completion(false, nil, .invalidResponse)
-          return
-        }
-
-        guard response.statusCode == 200 else {
-          print("Failure response from Flickr: \(response.statusCode)")
-          completion(false, nil, .failedRequest)
-          return
-        }
-        
         do {
-          let decoder = JSONDecoder()
-          let searchData = try decoder.decode(PhotoSearchResponse.self, from: data)
-          
-          completion(true, searchData, nil)
+            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+            let result = try JSONDecoder().decode(PhotoSearchResponse.self, from: data)
+            if let response = result.photos?.photo {
+                completion(true, response, nil)
+            }
+            
         } catch {
-          print("Unable to decode Flickr response: \(error)")
-          completion(false, nil, .invalidData)
-      }
-      }
-    }.resume()
+            print(error)
+            completion(false, nil, .invalidData)
+        }
+    
+//MARK: Use below code for actual API workable scenario
+//    URLSession.shared.dataTask(with: url) { (data, response, error) in
+//      //execute completion handler on main thread
+//      DispatchQueue.main.async {
+//        guard error == nil else {
+//          print("Failed request from Flickr: \(error!.localizedDescription)")
+//            completion(false, nil, .failedRequest)
+//          return
+//        }
+//
+//        guard let data = data else {
+//          print("No data returned from Flickr")
+//          completion(false, nil, .noData)
+//          return
+//        }
+//
+//        guard let response = response as? HTTPURLResponse else {
+//          print("Unable to process Flickr response")
+//          completion(false, nil, .invalidResponse)
+//          return
+//        }
+//
+//        guard response.statusCode == 200 else {
+//          print("Failure response from Flickr: \(response.statusCode)")
+//          completion(false, nil, .failedRequest)
+//          return
+//        }
+//
+//        do {
+//          let decoder = JSONDecoder()
+//          let searchData = try decoder.decode(PhotoSearchResponse.self, from: data)
+//          if let response = result.photos?.photo {
+//              completion(true, response, nil)
+//          }
+//        } catch {
+//          print("Unable to decode Flickr response: \(error)")
+//          completion(false, nil, .invalidData)
+//      }
+//      }
+//    }.resume()
   }
 }
 
